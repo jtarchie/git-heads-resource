@@ -34,7 +34,7 @@ RSpec.describe 'Integration Tests' do
         source: {
           uri: 'https://github.com/jtarchie/github-pullrequest-resource',
           tags: {
-            only: /^v\\d$/
+            only: /^v\d$/
           }
         }
       )
@@ -68,7 +68,7 @@ RSpec.describe 'Integration Tests' do
         source: {
           uri: 'https://github.com/jtarchie/github-pullrequest-resource',
           tags: {
-            ignore: /^v\\d$/
+            ignore: /^v\d$/
           }
         }
       )

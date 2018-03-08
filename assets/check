@@ -22,7 +22,7 @@ Dir.chdir(dir) do
     'fetch = +refs/pull/*/head:refs/remotes/origin/pr/*'
   )
   File.write('.git/config', lines.join("\n"))
-  system('git fetch --depth=1')
+  system('git fetch --depth=1 --tags')
   versions = `git branch -a`.split("\n").map(&:strip).map do |branch|
     {
       branch: branch.strip,
