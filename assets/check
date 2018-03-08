@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'time'
+require 'tmpdir'
+
+payload      = JSON.parse(ARGF.read)
+dir          = Dir.mktmpdir
+source       = payload.fetch('source', {})
+last_version = payload.fetch('version', {})
+url          = source.fetch('uri')
+versions     = []
+
+Dir.chdir(dir) do
+  system('git init 1>&2')
+  system("git remote add origin #{url} --tags 1>&2")
+  lines = File.readlines('.git/config')
+  index = lines.index { |l| l.include?('fetch') }
+  lines.insert(
+    index,
+    'fetch = +refs/pull/*/head:refs/remotes/origin/pr/*'
+  )
+  File.write('.git/config', lines.join("\n"))
+  system('git fetch --depth=1')
+  versions = `git branch -a`.split("\n").map(&:strip).map do |branch|
+    {
+      branch: branch.strip,
+      sha: `git rev-parse #{branch}`,
+      timestamp: Time.parse(`git log -1 --pretty=format:%ai #{branch}`).utc
+    }
+  end + `git tag -l`.split("\n").map(&:strip).map do |tag|
+    {
+      tag: tag,
+      sha: `git rev-parse #{tag}`,
+      timestamp: Time.parse(`git log -1 --pretty=format:%ai #{tag}`).utc
+    }
+  end
+end
+
+versions.select! do |version|
+  (
+    version.key?(:branch) &&
+    version.fetch(:branch).match(source.dig('branches', 'only') || /.*/)
+  ) ||
+    (
+      version.key?(:tag) &&
+      version.fetch(:tag).match(source.dig('tags', 'only') || /.*/)
+    )
+end
+
+versions.reject! do |version|
+  (
+    version.key?(:branch) &&
+    version.fetch(:branch).match(source.dig('branches', 'ignore') || '^$')
+  ) ||
+    (
+      version.key?(:tag) &&
+      version.fetch(:tag).match(source.dig('tags', 'ignore') || '^$')
+    )
+end
+
+unless last_version.empty?
+  timestamp = Time.parse(last_version.fetch('timestamp'))
+  versions.reject! do |version|
+    version[:timestamp] < timestamp
+  end
+end
+
+puts versions
+  .sort_by { |v| v[:timestamp] }
+  .to_json
