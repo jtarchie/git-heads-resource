@@ -9,7 +9,7 @@ source       = payload.fetch('source', {})
 version      = payload.fetch('version')
 url          = source.fetch('uri')
 fetch_cmd    = source.dig('git', 'fetch') ||
-  'git fetch --unshallow --force --recurse-submodules=yes -j 4 origin $REF'
+               'git fetch --unshallow --force --recurse-submodules=yes -j 4 origin $REF'
 ref          = version['branch'] || version['tag']
 
 Dir.chdir(dir) do
@@ -27,4 +27,4 @@ Dir.chdir(dir) do
   system("git checkout #{ref}")
 end
 
-puts({version: version}.to_json)
+puts({ version: version }.to_json)
