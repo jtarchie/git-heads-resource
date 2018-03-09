@@ -8,7 +8,7 @@ require 'tmpdir'
 payload      = JSON.parse(ARGF.read)
 dir          = "#{ENV['TMPDIR']}/git-heads-resource-cache"
 source       = payload.fetch('source', {})
-last_version = payload.fetch('version', {})
+last_version = payload.dig('version') || {}
 url          = source.fetch('uri')
 versions     = []
 

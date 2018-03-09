@@ -124,6 +124,21 @@ RSpec.describe 'Integration Tests' do
       expect(output).to_not include hash_including('tag' => 'v2')
       expect_timestamps output
     end
+
+    it 'does not fail on an empty version' do
+      output = check(
+        source: {
+          uri: 'https://github.com/jtarchie/github-pullrequest-resource',
+          branches: {
+            ignore: /pr/
+          }
+        },
+        version: nil
+      )
+
+      expect(output.size).to be > 0
+      expect_timestamps output
+    end
   end
 
   context '/opt/resource/in' do
