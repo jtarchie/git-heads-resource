@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+
+dir          = ARGV.shift
+payload      = JSON.parse(ARGF.read)
+source       = payload.fetch('source', {})
+version      = payload.fetch('version')
+url          = source.fetch('uri')
+fetch_cmd    = source.dig('git', 'fetch') ||
+  'git fetch --unshallow --force --recurse-submodules=yes -j 4 origin $REF'
+ref          = version['branch'] || version['tag']
+
+Dir.chdir(dir) do
+  system('git init 1>&2')
+  system("git remote add origin #{url} --tags 1>&2")
+  lines = File.readlines('.git/config')
+  index = lines.index { |l| l.include?('fetch') }
+  lines.insert(
+    index,
+    'fetch = +refs/pull/*/head:refs/remotes/origin/pr/*'
+  )
+  File.write('.git/config', lines.join("\n"))
+  system('git fetch --depth=1 --tags')
+  system(fetch_cmd.gsub('$REF', ref))
+  system("git checkout #{ref}")
+end
+
+puts({version: version}.to_json)

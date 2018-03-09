@@ -1,13 +1,19 @@
 # frozen_string_literal: true
 
+require 'json'
 require 'spec_helper'
 require 'time'
-require 'json'
+require 'tmpdir'
 
 RSpec.describe 'Integration Tests' do
   def check(payload)
     path = ['./assets/check', '/opt/resource/check'].find { |p| File.exist? p }
     JSON.parse `echo '#{payload.to_json}' | #{path}`
+  end
+
+  def get(payload, dir)
+    path = ['./assets/in', '/opt/resource/in'].find { |p| File.exist? p }
+    JSON.parse `echo '#{payload.to_json}' | #{path} #{dir}`
   end
 
   context '/opt/resourece/check' do
@@ -117,6 +123,34 @@ RSpec.describe 'Integration Tests' do
       expect(output).to_not include hash_including('branch' => 'remotes/origin/pr/51')
       expect(output).to_not include hash_including('tag' => 'v2')
       expect_timestamps output
+    end
+  end
+
+  context '/opt/resource/in' do
+    it 'fetches a version' do
+      dir = Dir.mktmpdir
+      output = get({
+                     source: {
+                       uri: 'https://github.com/jtarchie/github-pullrequest-resource'
+                     },
+                     version: {
+                       tag: 'v22',
+                       sha: '698106d7b91cb186451fe50c732f0dfff9471a1b',
+                       timestamp: '2017-03-02 04:25:16 UTC'
+                     }
+                   }, dir)
+
+      Dir.chdir(dir) do
+        expect(`git rev-parse HEAD`.chomp).to eq '698106d7b91cb186451fe50c732f0dfff9471a1b'
+      end
+
+      expect(output).to eq(
+        'version' => {
+          'tag' => 'v22',
+          'sha' => '698106d7b91cb186451fe50c732f0dfff9471a1b',
+          'timestamp' => '2017-03-02 04:25:16 UTC'
+        }
+      )
     end
   end
 end
