@@ -9,7 +9,7 @@ concourse can effectively iterate with them `version: every`.
 Define a custom resource type in your pipeline YAML. You'll have to this in
 each pipeline.
 
-```
+```yaml
 resource_types:
 - name: git-head
   type: docker-image
