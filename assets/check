@@ -6,22 +6,28 @@ require 'time'
 require 'tmpdir'
 
 payload      = JSON.parse(ARGF.read)
-dir          = Dir.mktmpdir
+dir          = "#{ENV['TMPDIR']}/git-heads-resource-cache"
 source       = payload.fetch('source', {})
 last_version = payload.fetch('version', {})
 url          = source.fetch('uri')
 versions     = []
 
+unless Dir.exist?(dir)
+  Dir.mkdir(dir)
+  Dir.chdir(dir) do
+    system('git init 1>&2')
+    system("git remote add origin #{url} --tags 1>&2")
+    lines = File.readlines('.git/config')
+    index = lines.index { |l| l.include?('fetch') }
+    lines.insert(
+      index,
+      'fetch = +refs/pull/*/head:refs/remotes/origin/pr/*'
+    )
+    File.write('.git/config', lines.join("\n"))
+  end
+end
+
 Dir.chdir(dir) do
-  system('git init 1>&2')
-  system("git remote add origin #{url} --tags 1>&2")
-  lines = File.readlines('.git/config')
-  index = lines.index { |l| l.include?('fetch') }
-  lines.insert(
-    index,
-    'fetch = +refs/pull/*/head:refs/remotes/origin/pr/*'
-  )
-  File.write('.git/config', lines.join("\n"))
   system('git fetch --depth=1 --tags')
   versions = `git branch -a`.split("\n").map(&:strip).map do |branch|
     {
