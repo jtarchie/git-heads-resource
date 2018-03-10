@@ -142,7 +142,7 @@ RSpec.describe 'Integration Tests' do
   end
 
   context '/opt/resource/in' do
-    it 'fetches a version' do
+    it 'fetches a tag version' do
       dir = Dir.mktmpdir
       output = get({
                      source: {
@@ -164,6 +164,32 @@ RSpec.describe 'Integration Tests' do
           'tag' => 'v22',
           'sha' => '698106d7b91cb186451fe50c732f0dfff9471a1b',
           'timestamp' => '2017-03-02 04:25:16 UTC'
+        }
+      )
+    end
+
+    it 'fetches a branch version' do
+      dir = Dir.mktmpdir
+      output = get({
+                     source: {
+                       uri: 'https://github.com/jtarchie/github-pullrequest-resource'
+                     },
+                     version: {
+                       tag: 'remotes/origin/pr/51',
+                       sha: '46ed2c41c36c91d0ba02185549d1522f8611f627',
+                       timestamp: '2016-12-17 04:25:16 UTC'
+                     }
+                   }, dir)
+
+      Dir.chdir(dir) do
+        expect(`git rev-parse HEAD`.chomp).to eq '46ed2c41c36c91d0ba02185549d1522f8611f627'
+      end
+
+      expect(output).to eq(
+        'version' => {
+          'tag' => 'remotes/origin/pr/51',
+          'sha' => '46ed2c41c36c91d0ba02185549d1522f8611f627',
+          'timestamp' => '2016-12-17 04:25:16 UTC'
         }
       )
     end

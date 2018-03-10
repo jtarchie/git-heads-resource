@@ -10,7 +10,7 @@ version      = payload.fetch('version')
 url          = source.fetch('uri')
 fetch_cmd    = source.dig('git', 'fetch') ||
                'git fetch --unshallow --force --recurse-submodules=yes -j 4 origin $REF'
-ref          = version['branch'] || version['tag']
+ref          = version['sha']
 
 Dir.chdir(dir) do
   system('git init 1>&2')
