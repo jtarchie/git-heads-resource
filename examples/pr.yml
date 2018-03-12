@@ -3,14 +3,14 @@ resource_types:
   type: docker-image
   source:
     repository: jtarchie/git-head-resource
-    branches:
-      only: /pr/
 
 resources:
 - name: github-pullrequest-resource
   type: git-head
   source:
     uri: https://github.com/jtarchie/github-pullrequest-resource
+    branches:
+      only: /pr/
 
 jobs:
 - name: example
@@ -18,3 +18,21 @@ jobs:
   - get: github-pullrequest-resource
     trigger: true
     version: every
+  - task: git log
+    config:
+      inputs:
+      - name: github-pullrequest-resource
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alpine/git
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            #!/bin/bash
+            set -eux
+            cd github-pullrequest-resource
+            git --no-pager log --decorate=short --pretty=oneline
